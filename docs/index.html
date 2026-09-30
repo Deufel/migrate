@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="dark light"/>
+<title>migrate — migrate</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/system.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/highlight.css"/>
+<style>@layer project { :where(.pg-aside) > :where(.toc) { position: sticky; inset-block-start: 0; } }</style>
+</head>
+<body>
+<div class="page">
+	<header class="pg-header spread" style="--gap: 0.5em;">
+		<a href="index.html" class="row oneline" style="--gap: 0.5em;"><strong>migrate</strong><small style="--fg: -0.55;">numbered SQL migrations for SQLite</small></a>
+		<span class="row oneline" style="--gap: 0.5em;"><a href="https://github.com/Deufel/migrate" style="--type: -1;">Source</a></span>
+	</header>
+	<nav class="pg-navigation spread-column tablet desktop" aria-label="Sections">
+		<div class="column"><a class="nav-item" href="index.html" aria-current="page"><span class="medium large">Home</span></a><a class="nav-item" href="pkg/migrate.html"><span class="medium large">Packages</span></a></div>
+	</nav>
+	<header class="pg-main-header column">
+		<nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">migrate</a></nav>
+		<div class="spread"><h1>migrate</h1></div>
+	</header>
+	
+	<main class="pg-main column owns-scroll">
+		<section class="column measure" style="--measure: 3; --gap: 1lh;">
+<h1 id="migrate">migrate</h1>
+<p>Numbered SQL migrations for SQLite — the fastmigrate rules with two
+additions: every file runs in its own transaction with a foreign-key
+check before commit, and every applied file's checksum is recorded so a
+committed file can never change. A standalone module; the doc comment in
+<code>migrate.go</code> is the specification, and the site at
+<a href="https://deufel.github.io/migrate/">https://deufel.github.io/migrate/</a> is built from it and the tested examples
+by <a href="https://github.com/Deufel/sitegen">sitegen</a> (<code>go run github.com/Deufel/sitegen/cmd/sitegen -root . -out docs -title migrate</code>).</p>
+<pre><code>go test ./...                      # the module on its own
+go run ./cmd/migrate -db x.db -dir migrations status
+go run ./cmd/migrate -db x.db -dir migrations up -backup backups/before-0004.db
+go run ./cmd/migrate -db x.db -dir migrations baseline 1
+go run ./cmd/migrate -dir migrations new add-visit-table
+</code></pre>
+<p>A structure change is a rebuild written as SQL in the file:</p>
+<pre><code class="language-sql">CREATE TABLE thing_new (…the new declaration…);
+INSERT INTO thing_new (…) SELECT … FROM thing;
+DROP TABLE thing;
+ALTER TABLE thing_new RENAME TO thing;
+CREATE INDEX … ;
+</code></pre>
+<p>Foreign keys are off while the file runs and checked before commit, so a
+rebuild that strands a child row is refused whole.</p>
+
+		</section>
+	</main>
+	
+</div>
+<script src="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/highlight.js"></script>
+</body>
+</html>

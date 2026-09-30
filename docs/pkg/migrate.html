@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="dark light"/>
+<title>github.com/Deufel/migrate — migrate</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/system.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/highlight.css"/>
+<style>@layer project { :where(.pg-aside) > :where(.toc) { position: sticky; inset-block-start: 0; } }</style>
+</head>
+<body>
+<div class="page">
+	<header class="pg-header spread" style="--gap: 0.5em;">
+		<a href="../index.html" class="row oneline" style="--gap: 0.5em;"><strong>migrate</strong><small style="--fg: -0.55;">numbered SQL migrations for SQLite</small></a>
+		<span class="row oneline" style="--gap: 0.5em;"><a href="https://github.com/Deufel/migrate" style="--type: -1;">Source</a></span>
+	</header>
+	<nav class="pg-navigation spread-column tablet desktop" aria-label="Sections">
+		<div class="column"><a class="nav-item" href="../index.html"><span class="medium large">Home</span></a><a class="nav-item" href="../pkg/migrate.html" aria-current="page"><span class="medium large">Packages</span></a></div>
+	</nav>
+	<header class="pg-main-header column">
+		<nav class="crumbs" aria-label="Breadcrumb"><a href="../index.html">migrate</a><a href="../pkg/migrate.html">Packages</a></nav>
+		<div class="spread"><h1>github.com/Deufel/migrate</h1></div>
+	</header>
+	<nav class="pg-toolbar spread-column tablet desktop" aria-label="Packages"><div class="column" style="--gap: 0.1lh;"><small class="rail-head medium large">Packages</small><a class="nav-item" href="../pkg/migrate.html" aria-current="page"><span class="medium large">github.com/Deufel/migrate</span></a><a class="nav-item" href="../pkg/cmd-migrate.html"><span class="medium large">github.com/Deufel/migrate/cmd/migrate</span></a></div></nav>
+	<main class="pg-main column owns-scroll">
+		<section class="column measure" style="--measure: 3; --gap: 1lh;">
+<p><code>import "github.com/Deufel/migrate"</code></p><h2 id="overview">Overview</h2><p>Package migrate runs numbered SQL migrations against a SQLite database —
+the fastmigrate rules (answer.ai) with two additions: every file runs in
+its own transaction with a foreign-key check before commit, and every
+applied file&apos;s checksum is recorded so a committed file can never change.
+<p>A migration is a file named NNNN-description.sql (a four-digit version,
+a kebab description). Files run in version order; each is applied at
+most once; the record lives in one table (sys_migration by default):
+<pre>version · name · sha256 · applied_at
+</pre>
+<p>Rules, in the order the runner checks them:
+<ol>
+<li>every applied version must still have its file, byte-identical
+(a changed or missing file is an error, never silently re-run);
+<li>a file whose version is below the newest applied one but was never
+applied is an error (history is append-only);
+<li>before the first pending file runs, an optional backup is taken with
+VACUUM INTO (the caller names the path; it must not exist);
+<li>each file runs on one connection: PRAGMA foreign_keys=OFF, BEGIN,
+the file, PRAGMA foreign_key_check (any row fails), the record row,
+COMMIT, PRAGMA foreign_keys=ON — the documented SQLite rebuild
+procedure, so a file may drop and recreate a table with data kept;
+<li>the first error stops the run; files before it stay applied, the
+failed one is rolled back whole.
+</ol>
+<p>A structure change is written as SQL: create the new table, INSERT …
+SELECT, drop the old, rename, recreate the indexes. The declaration
+changes and the data follows in the same file.
+<h2 id="functions">Functions</h2><h3 id="baseline">Baseline</h3><pre><code class="go">func Baseline(ctx context.Context, db *sql.DB, o Options, version int) error</code></pre><p>Baseline stamps every file up to and including version as applied
+WITHOUT running it — for a database that already carries the schema
+the baseline file describes. Refused when anything is recorded already.
+<h3 id="next">Next</h3><pre><code class="go">func Next(fsys fs.FS, description string) (string, error)</code></pre><p>Next answers the file name a new migration should take.
+<h2 id="types">Types</h2><h3 id="options">Options</h3><pre><code class="go">type Options struct {
+	FS	fs.FS	// the directory of NNNN-name.sql files (its root)
+	Table	string	// the record table; &#34;&#34; = sys_migration
+	Backup	string	// a path for VACUUM INTO before the first pending step; &#34;&#34; = none
+	Log	func(format string, args ...any)
+}</code></pre><p>Options configure a run.
+<h3 id="step">Step</h3><pre><code class="go">type Step struct {
+	Version		int
+	Name		string	// the description part of the file name
+	File		string
+	SHA		string	// sha256 of the file&#39;s bytes
+	AppliedAt	string	// RFC3339, &#34;&#34; when pending
+}</code></pre><p>Step is one migration file, applied or pending.
+<h3 id="load">Load</h3><pre><code class="go">func Load(fsys fs.FS) ([]Step, error)</code></pre><p>Load reads and orders the files. A name off the pattern, a duplicate
+version or an empty file is an error.
+<h3 id="run">Run</h3><pre><code class="go">func Run(ctx context.Context, db *sql.DB, o Options) ([]Step, error)</code></pre><p>Run applies every pending file in order and answers the ones applied.
+The first error stops the run with the failed file rolled back.
+<h3 id="status">Status</h3><pre><code class="go">func Status(ctx context.Context, db *sql.DB, o Options) (applied, pending []Step, err error)</code></pre><p>Status answers what is applied and what is pending, after verifying
+rules 1 and 2. The applied steps carry the file&apos;s name and hash from
+the record; the pending ones from the file.
+<h2 id="examples">Examples</h2><h3 id="examplebaseline">Baseline</h3><pre><code class="go">package main
+
+import (
+	&#34;context&#34;
+	&#34;database/sql&#34;
+	&#34;fmt&#34;
+	&#34;os&#34;
+	&#34;path/filepath&#34;
+
+	&#34;github.com/Deufel/migrate&#34;
+	_ &#34;modernc.org/sqlite&#34;
+)
+
+// dir writes a migrations directory for an example and answers it.
+func dir(files map[string]string) string {
+	d, _ := os.MkdirTemp(&#34;&#34;, &#34;migrate-example&#34;)
+	for name, body := range files {
+		_ = os.WriteFile(filepath.Join(d, name), []byte(body), 0o644)
+	}
+	return d
+}
+
+func open() *sql.DB {
+	d, _ := os.MkdirTemp(&#34;&#34;, &#34;migrate-example&#34;)
+	db, _ := sql.Open(&#34;sqlite&#34;, filepath.Join(d, &#34;app.db&#34;))
+	return db
+}
+
+func main() {
+	db := open()
+	defer db.Close()
+	// a store that already has the table: the files up to 1 are declared
+	// applied without running
+	_, _ = db.Exec(&#34;CREATE TABLE thing (id INTEGER PRIMARY KEY)&#34;)
+	o := migrate.Options{FS: os.DirFS(dir(map[string]string{
+		&#34;0001-baseline.sql&#34;:	&#34;CREATE TABLE thing (id INTEGER PRIMARY KEY);&#34;,
+		&#34;0002-add-name.sql&#34;:	&#34;ALTER TABLE thing ADD COLUMN name TEXT NOT NULL DEFAULT &#39;&#39;;&#34;,
+	}))}
+	_ = migrate.Baseline(context.Background(), db, o, 1)
+	applied, _ := migrate.Run(context.Background(), db, o)
+	fmt.Println(len(applied), &#34;applied:&#34;, applied[0].File)
+}</code></pre><small>Output</small><pre><code>1 applied: 0002-add-name.sql</code></pre><h3 id="exampleload">Load</h3><pre><code class="go">package main
+
+import (
+	&#34;fmt&#34;
+	&#34;os&#34;
+	&#34;path/filepath&#34;
+
+	&#34;github.com/Deufel/migrate&#34;
+	_ &#34;modernc.org/sqlite&#34;
+)
+
+// dir writes a migrations directory for an example and answers it.
+func dir(files map[string]string) string {
+	d, _ := os.MkdirTemp(&#34;&#34;, &#34;migrate-example&#34;)
+	for name, body := range files {
+		_ = os.WriteFile(filepath.Join(d, name), []byte(body), 0o644)
+	}
+	return d
+}
+
+func main() {
+	steps, _ := migrate.Load(os.DirFS(dir(map[string]string{
+		&#34;0001-baseline.sql&#34;:	&#34;CREATE TABLE thing (id INTEGER PRIMARY KEY);&#34;,
+		&#34;0002-add-name.sql&#34;:	&#34;ALTER TABLE thing ADD COLUMN name TEXT NOT NULL DEFAULT &#39;&#39;;&#34;,
+	})))
+	for _, s := range steps {
+		fmt.Println(s.Version, s.Name)
+	}
+}</code></pre><small>Output</small><pre><code>1 baseline
+2 add-name</code></pre><h3 id="examplenext">Next</h3><pre><code class="go">package main
+
+import (
+	&#34;fmt&#34;
+	&#34;os&#34;
+	&#34;path/filepath&#34;
+
+	&#34;github.com/Deufel/migrate&#34;
+	_ &#34;modernc.org/sqlite&#34;
+)
+
+// dir writes a migrations directory for an example and answers it.
+func dir(files map[string]string) string {
+	d, _ := os.MkdirTemp(&#34;&#34;, &#34;migrate-example&#34;)
+	for name, body := range files {
+		_ = os.WriteFile(filepath.Join(d, name), []byte(body), 0o644)
+	}
+	return d
+}
+
+func main() {
+	name, _ := migrate.Next(os.DirFS(dir(map[string]string{
+		&#34;0001-baseline.sql&#34;: &#34;CREATE TABLE thing (id INTEGER PRIMARY KEY);&#34;,
+	})), &#34;add-name&#34;)
+	fmt.Println(name)
+}</code></pre><small>Output</small><pre><code>0002-add-name.sql</code></pre><h3 id="examplerun">Run</h3><pre><code class="go">package main
+
+import (
+	&#34;context&#34;
+	&#34;database/sql&#34;
+	&#34;fmt&#34;
+	&#34;os&#34;
+	&#34;path/filepath&#34;
+
+	&#34;github.com/Deufel/migrate&#34;
+	_ &#34;modernc.org/sqlite&#34;
+)
+
+// dir writes a migrations directory for an example and answers it.
+func dir(files map[string]string) string {
+	d, _ := os.MkdirTemp(&#34;&#34;, &#34;migrate-example&#34;)
+	for name, body := range files {
+		_ = os.WriteFile(filepath.Join(d, name), []byte(body), 0o644)
+	}
+	return d
+}
+
+func open() *sql.DB {
+	d, _ := os.MkdirTemp(&#34;&#34;, &#34;migrate-example&#34;)
+	db, _ := sql.Open(&#34;sqlite&#34;, filepath.Join(d, &#34;app.db&#34;))
+	return db
+}
+
+func main() {
+	db := open()
+	defer db.Close()
+	o := migrate.Options{FS: os.DirFS(dir(map[string]string{
+		&#34;0001-baseline.sql&#34;:	&#34;CREATE TABLE thing (id INTEGER PRIMARY KEY);&#34;,
+		&#34;0002-add-name.sql&#34;:	&#34;ALTER TABLE thing ADD COLUMN name TEXT NOT NULL DEFAULT &#39;&#39;;&#34;,
+	}))}
+	applied, _ := migrate.Run(context.Background(), db, o)
+	fmt.Println(len(applied), &#34;applied&#34;)
+	again, _ := migrate.Run(context.Background(), db, o)
+	fmt.Println(len(again), &#34;applied the second time&#34;)
+}</code></pre><small>Output</small><pre><code>2 applied
+0 applied the second time</code></pre><h3 id="examplestatus">Status</h3><pre><code class="go">package main
+
+import (
+	&#34;context&#34;
+	&#34;database/sql&#34;
+	&#34;fmt&#34;
+	&#34;os&#34;
+	&#34;path/filepath&#34;
+
+	&#34;github.com/Deufel/migrate&#34;
+	_ &#34;modernc.org/sqlite&#34;
+)
+
+// dir writes a migrations directory for an example and answers it.
+func dir(files map[string]string) string {
+	d, _ := os.MkdirTemp(&#34;&#34;, &#34;migrate-example&#34;)
+	for name, body := range files {
+		_ = os.WriteFile(filepath.Join(d, name), []byte(body), 0o644)
+	}
+	return d
+}
+
+func open() *sql.DB {
+	d, _ := os.MkdirTemp(&#34;&#34;, &#34;migrate-example&#34;)
+	db, _ := sql.Open(&#34;sqlite&#34;, filepath.Join(d, &#34;app.db&#34;))
+	return db
+}
+
+func main() {
+	db := open()
+	defer db.Close()
+	o := migrate.Options{FS: os.DirFS(dir(map[string]string{
+		&#34;0001-baseline.sql&#34;:	&#34;CREATE TABLE thing (id INTEGER PRIMARY KEY);&#34;,
+		&#34;0002-add-name.sql&#34;:	&#34;ALTER TABLE thing ADD COLUMN name TEXT NOT NULL DEFAULT &#39;&#39;;&#34;,
+	}))}
+	_, _ = migrate.Run(context.Background(), db, migrate.Options{FS: os.DirFS(dir(map[string]string{
+		&#34;0001-baseline.sql&#34;: &#34;CREATE TABLE thing (id INTEGER PRIMARY KEY);&#34;,
+	}))})
+	applied, pending, _ := migrate.Status(context.Background(), db, o)
+	fmt.Println(len(applied), &#34;applied,&#34;, len(pending), &#34;pending:&#34;, pending[0].File)
+}</code></pre><small>Output</small><pre><code>1 applied, 1 pending: 0002-add-name.sql</code></pre>
+		</section>
+	</main>
+	<aside class="pg-aside desktop"><nav class="toc column" aria-label="On this page" style="--gap: 0; --type: -1;"><small class="rail-head">On this page</small><a href="#overview">Overview</a><a href="#functions">Functions</a><a href="#types">Types</a><a href="#examples">Examples</a></nav></aside><footer class="pg-main-footer spread" style="--type: -1;"><span></span><span><a href="../pkg/cmd-migrate.html">github.com/Deufel/migrate/cmd/migrate →</a></span></footer>
+</div>
+<script src="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/highlight.js"></script>
+</body>
+</html>

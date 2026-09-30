@@ -4,7 +4,10 @@ Numbered SQL migrations for SQLite — the fastmigrate rules with two
 additions: every file runs in its own transaction with a foreign-key
 check before commit, and every applied file's checksum is recorded so a
 committed file can never change. A standalone module; the doc comment in
-`migrate.go` is the specification.
+`migrate.go` is the specification, and the site at
+https://deufel.github.io/migrate/ is built from it and the tested examples
+by [sitegen](https://github.com/Deufel/sitegen) (`go run
+github.com/Deufel/sitegen/cmd/sitegen -root . -out docs -title migrate`).
 
 ```
 go test ./...                      # the module on its own
