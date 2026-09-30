@@ -7,22 +7,35 @@
 <title>migrate — migrate</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/system.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/highlight.css"/>
-<style>@layer project { :where(.pg-aside) > :where(.toc) { position: sticky; inset-block-start: 0; } }</style>
+<style>@layer project {
+  :root:not([data-ui-theme="dark"]) .to-light, :root[data-ui-theme="dark"] .to-dark { display: none; }
+  :where(h3.spread) > :where(a.icon) { --bg: 0; }
+}</style>
+<script>
+// the stored theme before first paint (the interstitial frame is pre-CSS)
+(function () { try { var t = localStorage.getItem('ui.theme'); if (t) document.documentElement.setAttribute('data-ui-theme', t) } catch (e) {} })();
+function toggleTheme() {
+  var h = document.documentElement, dark = h.getAttribute('data-ui-theme') === 'dark' || (!h.getAttribute('data-ui-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+  var t = dark ? 'light' : 'dark'; h.setAttribute('data-ui-theme', t); try { localStorage.setItem('ui.theme', t) } catch (e) {}
+}
+</script>
 </head>
 <body>
 <div class="page">
 	<header class="pg-header spread" style="--gap: 0.5em;">
-		<a href="../index.html" class="row oneline" style="--gap: 0.5em;"><strong>migrate</strong><small style="--fg: -0.55;">numbered SQL migrations for SQLite</small></a>
-		<span class="row oneline" style="--gap: 0.5em;"><a href="https://github.com/Deufel/migrate" style="--type: -1;">Source</a></span>
+		<span class="row oneline" style="--gap: 0.5em;">
+			<button type="button" class="icon mobile" aria-label="Menu" title="Menu" onclick="document.getElementById('site-nav').showModal()"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg></button>
+			<a href="../index.html" class="row oneline" style="--gap: 0.5em;"><strong>migrate</strong><small class="tablet desktop" style="--fg: -0.55;">numbered SQL migrations for SQLite</small></a>
+		</span>
+		<span class="row oneline" style="--gap: 0.25em;"><button type="button" class="icon" aria-label="Theme" title="Light or dark" onclick="toggleTheme()"><span class="to-dark"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></span><span class="to-light"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></span></button><a class="icon" href="https://github.com/Deufel/migrate" aria-label="Source on GitHub" title="Source on GitHub"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg></a></span>
 	</header>
-	<nav class="pg-navigation spread-column tablet desktop" aria-label="Sections">
-		<div class="column"><a class="nav-item" href="../index.html"><span class="medium large">Home</span></a><a class="nav-item" href="../pkg/migrate.html" aria-current="page"><span class="medium large">Packages</span></a></div>
-	</nav>
+	<nav class="pg-navigation spread-column tablet desktop" aria-label="Pages"><div class="column" style="--gap: 0.1lh;"><a class="nav-item" href="../index.html"><span>Home</span></a><small class="rail-head medium large" style="margin-block-start: 0.5lh;">Packages</small><a class="nav-item" href="../pkg/migrate.html" aria-current="page"><span>migrate</span></a><a class="nav-item" href="../pkg/cmd-migrate.html"><span>cmd/migrate</span></a></div></nav>
+	<dialog id="site-nav" class="drawer left mobile" closedby="any" aria-label="Pages"><div class="column" style="--gap: 0.1lh;"><a class="nav-item" href="../index.html"><span>Home</span></a><small class="rail-head medium large" style="margin-block-start: 0.5lh;">Packages</small><a class="nav-item" href="../pkg/migrate.html" aria-current="page"><span>migrate</span></a><a class="nav-item" href="../pkg/cmd-migrate.html"><span>cmd/migrate</span></a></div></dialog>
 	<header class="pg-main-header column">
-		<nav class="crumbs" aria-label="Breadcrumb"><a href="../index.html">migrate</a><a href="../pkg/migrate.html">Packages</a></nav>
+		<nav class="crumbs" aria-label="Breadcrumb"><a href="../index.html">migrate</a><span>Packages</span></nav>
 		<div class="spread"><h1>migrate</h1></div>
 	</header>
-	<nav class="pg-toolbar spread-column tablet desktop" aria-label="Packages"><div class="column" style="--gap: 0.1lh;"><small class="rail-head medium large">Packages</small><a class="nav-item" href="../pkg/migrate.html" aria-current="page"><span class="medium large">migrate</span></a><a class="nav-item" href="../pkg/cmd-migrate.html"><span class="medium large">cmd/migrate</span></a></div></nav>
+	<nav class="pg-toolbar spread-column tablet desktop" aria-label="On this page" style="--type: -1;"><div class="column" style="--gap: 0.1lh;"><a class="nav-item" href="#overview" style="margin-block-start: 0.5lh;"><span class="rail-head">Overview</span></a><a class="nav-item" href="#functions" style="margin-block-start: 0.5lh;"><span class="rail-head">Functions</span></a><a class="nav-item" href="#baseline"><span>Baseline</span></a><a class="nav-item" href="#next"><span>Next</span></a><a class="nav-item" href="#types" style="margin-block-start: 0.5lh;"><span class="rail-head">Types</span></a><a class="nav-item" href="#options"><span>Options</span></a><a class="nav-item" href="#step"><span>Step</span></a><a class="nav-item" href="#load"><span>Load</span></a><a class="nav-item" href="#run"><span>Run</span></a><a class="nav-item" href="#status"><span>Status</span></a><a class="nav-item" href="#examples" style="margin-block-start: 0.5lh;"><span class="rail-head">Examples</span></a><a class="nav-item" href="#examplebaseline"><span>Baseline</span></a><a class="nav-item" href="#exampleload"><span>Load</span></a><a class="nav-item" href="#examplenext"><span>Next</span></a><a class="nav-item" href="#examplerun"><span>Run</span></a><a class="nav-item" href="#examplestatus"><span>Status</span></a></div></nav>
 	<main class="pg-main column owns-scroll">
 		<section class="column measure" style="--measure: 3; --gap: 1lh;">
 <p><code>import "github.com/Deufel/migrate"</code></p><h2 id="overview">Overview</h2><p>Package migrate runs numbered SQL migrations against a SQLite database —
@@ -52,31 +65,31 @@ failed one is rolled back whole.
 <p>A structure change is written as SQL: create the new table, INSERT …
 SELECT, drop the old, rename, recreate the indexes. The declaration
 changes and the data follows in the same file.
-<h2 id="functions">Functions</h2><h3 id="baseline">Baseline</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Baseline(ctx context.Context, db *sql.DB, o Options, version int) error</code></pre></div><p>Baseline stamps every file up to and including version as applied
+<h2 id="functions">Functions</h2><h3 id="baseline" class="spread">Baseline<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/migrate.go#L268" aria-label="Source" title="migrate.go:268" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">func Baseline(ctx context.Context, db *sql.DB, o Options, version int) error</code></pre></div><p>Baseline stamps every file up to and including version as applied
 WITHOUT running it — for a database that already carries the schema
 the baseline file describes. Refused when anything is recorded already.
-<h3 id="next">Next</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Next(fsys fs.FS, description string) (string, error)</code></pre></div><p>Next answers the file name a new migration should take.
-<h2 id="types">Types</h2><h3 id="options">Options</h3><div class="column" style="--gap: 0;"><pre><code class="go">type Options struct {
+<h3 id="next" class="spread">Next<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/migrate.go#L302" aria-label="Source" title="migrate.go:302" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">func Next(fsys fs.FS, description string) (string, error)</code></pre></div><p>Next answers the file name a new migration should take.
+<h2 id="types">Types</h2><h3 id="options" class="spread">Options<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/migrate.go#L57" aria-label="Source" title="migrate.go:57" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">type Options struct {
 	FS	fs.FS	// the directory of NNNN-name.sql files (its root)
 	Table	string	// the record table; &#34;&#34; = sys_migration
 	Backup	string	// a path for VACUUM INTO before the first pending step; &#34;&#34; = none
 	Log	func(format string, args ...any)
 }</code></pre></div><p>Options configure a run.
-<h3 id="step">Step</h3><div class="column" style="--gap: 0;"><pre><code class="go">type Step struct {
+<h3 id="step" class="spread">Step<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/migrate.go#L48" aria-label="Source" title="migrate.go:48" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">type Step struct {
 	Version		int
 	Name		string	// the description part of the file name
 	File		string
 	SHA		string	// sha256 of the file&#39;s bytes
 	AppliedAt	string	// RFC3339, &#34;&#34; when pending
 }</code></pre></div><p>Step is one migration file, applied or pending.
-<h3 id="load">Load</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Load(fsys fs.FS) ([]Step, error)</code></pre></div><p>Load reads and orders the files. A name off the pattern, a duplicate
+<h3 id="load" class="spread">Load<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/migrate.go#L82" aria-label="Source" title="migrate.go:82" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">func Load(fsys fs.FS) ([]Step, error)</code></pre></div><p>Load reads and orders the files. A name off the pattern, a duplicate
 version or an empty file is an error.
-<h3 id="run">Run</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Run(ctx context.Context, db *sql.DB, o Options) ([]Step, error)</code></pre></div><p>Run applies every pending file in order and answers the ones applied.
+<h3 id="run" class="spread">Run<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/migrate.go#L194" aria-label="Source" title="migrate.go:194" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">func Run(ctx context.Context, db *sql.DB, o Options) ([]Step, error)</code></pre></div><p>Run applies every pending file in order and answers the ones applied.
 The first error stops the run with the failed file rolled back.
-<h3 id="status">Status</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Status(ctx context.Context, db *sql.DB, o Options) (applied, pending []Step, err error)</code></pre></div><p>Status answers what is applied and what is pending, after verifying
+<h3 id="status" class="spread">Status<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/migrate.go#L149" aria-label="Source" title="migrate.go:149" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">func Status(ctx context.Context, db *sql.DB, o Options) (applied, pending []Step, err error)</code></pre></div><p>Status answers what is applied and what is pending, after verifying
 rules 1 and 2. The applied steps carry the file&apos;s name and hash from
 the record; the pending ones from the file.
-<h2 id="examples">Examples</h2><h3 id="examplebaseline">Baseline</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
+<h2 id="examples">Examples</h2><h3 id="examplebaseline" class="spread">Baseline<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/example_test.go#L73" aria-label="Source" title="example_test.go:73" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;context&#34;
@@ -117,7 +130,7 @@ func main() {
 	_ = migrate.Baseline(context.Background(), db, o, 1)
 	applied, _ := migrate.Run(context.Background(), db, o)
 	fmt.Println(len(applied), &#34;applied:&#34;, applied[0].File)
-}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>1 applied: 0002-add-name.sql</code></pre></div><h3 id="exampleload">Load</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
+}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>1 applied: 0002-add-name.sql</code></pre></div><h3 id="exampleload" class="spread">Load<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/example_test.go#L29" aria-label="Source" title="example_test.go:29" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;fmt&#34;
@@ -146,7 +159,7 @@ func main() {
 		fmt.Println(s.Version, s.Name)
 	}
 }</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>1 baseline
-2 add-name</code></pre></div><h3 id="examplenext">Next</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
+2 add-name</code></pre></div><h3 id="examplenext" class="spread">Next<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/example_test.go#L89" aria-label="Source" title="example_test.go:89" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;fmt&#34;
@@ -171,7 +184,7 @@ func main() {
 		&#34;0001-baseline.sql&#34;: &#34;CREATE TABLE thing (id INTEGER PRIMARY KEY);&#34;,
 	})), &#34;add-name&#34;)
 	fmt.Println(name)
-}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>0002-add-name.sql</code></pre></div><h3 id="examplerun">Run</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
+}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>0002-add-name.sql</code></pre></div><h3 id="examplerun" class="spread">Run<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/example_test.go#L42" aria-label="Source" title="example_test.go:42" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;context&#34;
@@ -211,7 +224,7 @@ func main() {
 	again, _ := migrate.Run(context.Background(), db, o)
 	fmt.Println(len(again), &#34;applied the second time&#34;)
 }</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>2 applied
-0 applied the second time</code></pre></div><h3 id="examplestatus">Status</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
+0 applied the second time</code></pre></div><h3 id="examplestatus" class="spread">Status<a class="icon" href="https://github.com/Deufel/migrate/blob/HEAD/example_test.go#L58" aria-label="Source" title="example_test.go:58" style="--type: -1; --fg: -0.55;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></a></h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;context&#34;
@@ -254,7 +267,7 @@ func main() {
 }</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>1 applied, 1 pending: 0002-add-name.sql</code></pre></div>
 		</section>
 	</main>
-	<aside class="pg-aside desktop"><nav class="toc column" aria-label="On this page" style="--gap: 0; --type: -1;"><small class="rail-head">On this page</small><a href="#overview">Overview</a><a href="#functions">Functions</a><a href="#types">Types</a><a href="#examples">Examples</a></nav></aside><footer class="pg-main-footer spread" style="--type: -1;"><span></span><span><a href="../pkg/cmd-migrate.html">cmd/migrate →</a></span></footer>
+	<footer class="pg-main-footer spread" style="--type: -1;"><span></span><span><a href="../pkg/cmd-migrate.html">cmd/migrate →</a></span></footer>
 </div>
 <script src="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/highlight.js"></script>
 </body>
