@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="color-scheme" content="dark light"/>
-<title>github.com/Deufel/migrate — migrate</title>
+<title>migrate — migrate</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/system.css"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/highlight.css"/>
 <style>@layer project { :where(.pg-aside) > :where(.toc) { position: sticky; inset-block-start: 0; } }</style>
@@ -20,9 +20,9 @@
 	</nav>
 	<header class="pg-main-header column">
 		<nav class="crumbs" aria-label="Breadcrumb"><a href="../index.html">migrate</a><a href="../pkg/migrate.html">Packages</a></nav>
-		<div class="spread"><h1>github.com/Deufel/migrate</h1></div>
+		<div class="spread"><h1>migrate</h1></div>
 	</header>
-	<nav class="pg-toolbar spread-column tablet desktop" aria-label="Packages"><div class="column" style="--gap: 0.1lh;"><small class="rail-head medium large">Packages</small><a class="nav-item" href="../pkg/migrate.html" aria-current="page"><span class="medium large">github.com/Deufel/migrate</span></a><a class="nav-item" href="../pkg/cmd-migrate.html"><span class="medium large">github.com/Deufel/migrate/cmd/migrate</span></a></div></nav>
+	<nav class="pg-toolbar spread-column tablet desktop" aria-label="Packages"><div class="column" style="--gap: 0.1lh;"><small class="rail-head medium large">Packages</small><a class="nav-item" href="../pkg/migrate.html" aria-current="page"><span class="medium large">migrate</span></a><a class="nav-item" href="../pkg/cmd-migrate.html"><span class="medium large">migrate</span></a></div></nav>
 	<main class="pg-main column owns-scroll">
 		<section class="column measure" style="--measure: 3; --gap: 1lh;">
 <p><code>import "github.com/Deufel/migrate"</code></p><h2 id="overview">Overview</h2><p>Package migrate runs numbered SQL migrations against a SQLite database —
@@ -32,8 +32,8 @@ applied file&apos;s checksum is recorded so a committed file can never change.
 <p>A migration is a file named NNNN-description.sql (a four-digit version,
 a kebab description). Files run in version order; each is applied at
 most once; the record lives in one table (sys_migration by default):
-<pre>version · name · sha256 · applied_at
-</pre>
+<div class="column" style="--gap: 0;"><pre>version · name · sha256 · applied_at
+</pre></div>
 <p>Rules, in the order the runner checks them:
 <ol>
 <li>every applied version must still have its file, byte-identical
@@ -52,31 +52,31 @@ failed one is rolled back whole.
 <p>A structure change is written as SQL: create the new table, INSERT …
 SELECT, drop the old, rename, recreate the indexes. The declaration
 changes and the data follows in the same file.
-<h2 id="functions">Functions</h2><h3 id="baseline">Baseline</h3><pre><code class="go">func Baseline(ctx context.Context, db *sql.DB, o Options, version int) error</code></pre><p>Baseline stamps every file up to and including version as applied
+<h2 id="functions">Functions</h2><h3 id="baseline">Baseline</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Baseline(ctx context.Context, db *sql.DB, o Options, version int) error</code></pre></div><p>Baseline stamps every file up to and including version as applied
 WITHOUT running it — for a database that already carries the schema
 the baseline file describes. Refused when anything is recorded already.
-<h3 id="next">Next</h3><pre><code class="go">func Next(fsys fs.FS, description string) (string, error)</code></pre><p>Next answers the file name a new migration should take.
-<h2 id="types">Types</h2><h3 id="options">Options</h3><pre><code class="go">type Options struct {
+<h3 id="next">Next</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Next(fsys fs.FS, description string) (string, error)</code></pre></div><p>Next answers the file name a new migration should take.
+<h2 id="types">Types</h2><h3 id="options">Options</h3><div class="column" style="--gap: 0;"><pre><code class="go">type Options struct {
 	FS	fs.FS	// the directory of NNNN-name.sql files (its root)
 	Table	string	// the record table; &#34;&#34; = sys_migration
 	Backup	string	// a path for VACUUM INTO before the first pending step; &#34;&#34; = none
 	Log	func(format string, args ...any)
-}</code></pre><p>Options configure a run.
-<h3 id="step">Step</h3><pre><code class="go">type Step struct {
+}</code></pre></div><p>Options configure a run.
+<h3 id="step">Step</h3><div class="column" style="--gap: 0;"><pre><code class="go">type Step struct {
 	Version		int
 	Name		string	// the description part of the file name
 	File		string
 	SHA		string	// sha256 of the file&#39;s bytes
 	AppliedAt	string	// RFC3339, &#34;&#34; when pending
-}</code></pre><p>Step is one migration file, applied or pending.
-<h3 id="load">Load</h3><pre><code class="go">func Load(fsys fs.FS) ([]Step, error)</code></pre><p>Load reads and orders the files. A name off the pattern, a duplicate
+}</code></pre></div><p>Step is one migration file, applied or pending.
+<h3 id="load">Load</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Load(fsys fs.FS) ([]Step, error)</code></pre></div><p>Load reads and orders the files. A name off the pattern, a duplicate
 version or an empty file is an error.
-<h3 id="run">Run</h3><pre><code class="go">func Run(ctx context.Context, db *sql.DB, o Options) ([]Step, error)</code></pre><p>Run applies every pending file in order and answers the ones applied.
+<h3 id="run">Run</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Run(ctx context.Context, db *sql.DB, o Options) ([]Step, error)</code></pre></div><p>Run applies every pending file in order and answers the ones applied.
 The first error stops the run with the failed file rolled back.
-<h3 id="status">Status</h3><pre><code class="go">func Status(ctx context.Context, db *sql.DB, o Options) (applied, pending []Step, err error)</code></pre><p>Status answers what is applied and what is pending, after verifying
+<h3 id="status">Status</h3><div class="column" style="--gap: 0;"><pre><code class="go">func Status(ctx context.Context, db *sql.DB, o Options) (applied, pending []Step, err error)</code></pre></div><p>Status answers what is applied and what is pending, after verifying
 rules 1 and 2. The applied steps carry the file&apos;s name and hash from
 the record; the pending ones from the file.
-<h2 id="examples">Examples</h2><h3 id="examplebaseline">Baseline</h3><pre><code class="go">package main
+<h2 id="examples">Examples</h2><h3 id="examplebaseline">Baseline</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;context&#34;
@@ -117,7 +117,7 @@ func main() {
 	_ = migrate.Baseline(context.Background(), db, o, 1)
 	applied, _ := migrate.Run(context.Background(), db, o)
 	fmt.Println(len(applied), &#34;applied:&#34;, applied[0].File)
-}</code></pre><small>Output</small><pre><code>1 applied: 0002-add-name.sql</code></pre><h3 id="exampleload">Load</h3><pre><code class="go">package main
+}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>1 applied: 0002-add-name.sql</code></pre></div><h3 id="exampleload">Load</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;fmt&#34;
@@ -145,8 +145,8 @@ func main() {
 	for _, s := range steps {
 		fmt.Println(s.Version, s.Name)
 	}
-}</code></pre><small>Output</small><pre><code>1 baseline
-2 add-name</code></pre><h3 id="examplenext">Next</h3><pre><code class="go">package main
+}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>1 baseline
+2 add-name</code></pre></div><h3 id="examplenext">Next</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;fmt&#34;
@@ -171,7 +171,7 @@ func main() {
 		&#34;0001-baseline.sql&#34;: &#34;CREATE TABLE thing (id INTEGER PRIMARY KEY);&#34;,
 	})), &#34;add-name&#34;)
 	fmt.Println(name)
-}</code></pre><small>Output</small><pre><code>0002-add-name.sql</code></pre><h3 id="examplerun">Run</h3><pre><code class="go">package main
+}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>0002-add-name.sql</code></pre></div><h3 id="examplerun">Run</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;context&#34;
@@ -210,8 +210,8 @@ func main() {
 	fmt.Println(len(applied), &#34;applied&#34;)
 	again, _ := migrate.Run(context.Background(), db, o)
 	fmt.Println(len(again), &#34;applied the second time&#34;)
-}</code></pre><small>Output</small><pre><code>2 applied
-0 applied the second time</code></pre><h3 id="examplestatus">Status</h3><pre><code class="go">package main
+}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>2 applied
+0 applied the second time</code></pre></div><h3 id="examplestatus">Status</h3><div class="column" style="--gap: 0;"><pre><code class="go">package main
 
 import (
 	&#34;context&#34;
@@ -251,10 +251,10 @@ func main() {
 	}))})
 	applied, pending, _ := migrate.Status(context.Background(), db, o)
 	fmt.Println(len(applied), &#34;applied,&#34;, len(pending), &#34;pending:&#34;, pending[0].File)
-}</code></pre><small>Output</small><pre><code>1 applied, 1 pending: 0002-add-name.sql</code></pre>
+}</code></pre></div><small>Output</small><div class="column" style="--gap: 0;"><pre><code>1 applied, 1 pending: 0002-add-name.sql</code></pre></div>
 		</section>
 	</main>
-	<aside class="pg-aside desktop"><nav class="toc column" aria-label="On this page" style="--gap: 0; --type: -1;"><small class="rail-head">On this page</small><a href="#overview">Overview</a><a href="#functions">Functions</a><a href="#types">Types</a><a href="#examples">Examples</a></nav></aside><footer class="pg-main-footer spread" style="--type: -1;"><span></span><span><a href="../pkg/cmd-migrate.html">github.com/Deufel/migrate/cmd/migrate →</a></span></footer>
+	<aside class="pg-aside desktop"><nav class="toc column" aria-label="On this page" style="--gap: 0; --type: -1;"><small class="rail-head">On this page</small><a href="#overview">Overview</a><a href="#functions">Functions</a><a href="#types">Types</a><a href="#examples">Examples</a></nav></aside><footer class="pg-main-footer spread" style="--type: -1;"><span></span><span><a href="../pkg/cmd-migrate.html">migrate →</a></span></footer>
 </div>
 <script src="https://cdn.jsdelivr.net/gh/Deufel/system-css@v0.6.0/static/highlight.js"></script>
 </body>

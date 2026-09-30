@@ -3,7 +3,7 @@ module github.com/Deufel/migrate
 go 1.25
 
 require (
-	github.com/Deufel/sitegen v0.1.0
+	github.com/Deufel/sitegen v0.1.1
 	modernc.org/sqlite v1.34.1
 )
 

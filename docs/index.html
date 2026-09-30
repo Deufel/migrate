@@ -33,19 +33,19 @@ committed file can never change. A standalone module; the doc comment in
 <code>migrate.go</code> is the specification, and the site at
 <a href="https://deufel.github.io/migrate/">https://deufel.github.io/migrate/</a> is built from it and the tested examples
 by <a href="https://github.com/Deufel/sitegen">sitegen</a> (<code>go run github.com/Deufel/sitegen/cmd/sitegen -root . -out docs -title migrate</code>).</p>
-<pre><code>go test ./...                      # the module on its own
+<div class="column" style="--gap: 0;"><pre><code>go test ./...                      # the module on its own
 go run ./cmd/migrate -db x.db -dir migrations status
 go run ./cmd/migrate -db x.db -dir migrations up -backup backups/before-0004.db
 go run ./cmd/migrate -db x.db -dir migrations baseline 1
 go run ./cmd/migrate -dir migrations new add-visit-table
-</code></pre>
+</code></pre></div>
 <p>A structure change is a rebuild written as SQL in the file:</p>
-<pre><code class="language-sql">CREATE TABLE thing_new (…the new declaration…);
+<div class="column" style="--gap: 0;"><pre><code class="language-sql">CREATE TABLE thing_new (…the new declaration…);
 INSERT INTO thing_new (…) SELECT … FROM thing;
 DROP TABLE thing;
 ALTER TABLE thing_new RENAME TO thing;
 CREATE INDEX … ;
-</code></pre>
+</code></pre></div>
 <p>Foreign keys are off while the file runs and checked before commit, so a
 rebuild that strands a child row is refused whole.</p>
 
